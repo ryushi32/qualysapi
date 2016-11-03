@@ -90,6 +90,11 @@ api_methods['2'] = set([
     'api/2.0/fo/session/',
     'api/2.0/fo/setup/restricted_ips/',
 ])
+# API v2 methods some are (GET).
+api_methods['2 get'] = set([
+    'api/2.0/fo/schedule/scan',
+    'api/2.0/fo/schedule/report',
+])
 for auth_type in set([
     'ibm_db2',
     'ms_sql',

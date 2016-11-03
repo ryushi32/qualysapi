@@ -6,6 +6,8 @@ import stat
 import getpass
 import logging
 
+logging.basicConfig()
+
 # Setup module level logging.
 logger = logging.getLogger(__name__)
 

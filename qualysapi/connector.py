@@ -15,10 +15,11 @@ import requests
 import qualysapi.version
 import qualysapi.api_methods
 
-import qualysapi.api_actions
-import qualysapi.api_actions as api_actions
+
+
 
 # Setup module level logging.
+logging.basicConfig()
 logger = logging.getLogger(__name__)
 
 try:
@@ -28,7 +29,7 @@ except ImportError, e:
         'Warning: Cannot consume lxml.builder E objects without lxml. Send XML strings for AM & WAS API calls.')
 
 
-class QGConnector(api_actions.QGActions):
+class QGConnector:
     """ Qualys Connection class which allows requests to the QualysGuard API using HTTP-Basic Authentication (over SSL).
 
     """
@@ -138,7 +139,10 @@ class QGConnector(api_actions.QGActions):
         #
         # All API v2 requests are POST methods.
         if api_version == 2:
-            return 'post'
+            if api_call in self.api_methods['2 get']:
+                return 'get'
+            else:
+                return 'post'
         elif api_version == 1:
             if api_call in self.api_methods['1 post']:
                 return 'post'
@@ -276,9 +280,6 @@ class QGConnector(api_actions.QGActions):
             data = self.format_payload(api_version, data)
         # Make request at least once (more if concurrent_retry is enabled).
         retries = 0
-        #
-        # set a warning threshold for the rate limit
-        rate_warn_threshold = 10
         while retries <= concurrent_scans_retries:
             # Make request.
             logger.debug('url =\n%s' % (str(url)))
@@ -299,12 +300,6 @@ class QGConnector(api_actions.QGActions):
             try:
                 self.rate_limit_remaining[api_call] = int(request.headers['x-ratelimit-remaining'])
                 logger.debug('rate limit for api_call, %s = %s' % (api_call, self.rate_limit_remaining[api_call]))
-                if (self.rate_limit_remaining[api_call] > rate_warn_threshold):
-                    logger.debug('rate limit for api_call, %s = %s' % (api_call, self.rate_limit_remaining[api_call]))
-                elif (self.rate_limit_remaining[api_call] <= rate_warn_threshold) and (self.rate_limit_remaining[api_call] > 0):
-                    logger.warning('Rate limit is about to being reached (remaining api calls = %s)' % self.rate_limit_remaining[api_call])
-                elif self.rate_limit_remaining[api_call] <= 0:
-                    logger.critical('ATTENTION! RATE LIMIT HAS BEEN REACHED (remaining api calls = %s)!' % self.rate_limit_remaining[api_call])
             except KeyError, e:
                 # Likely a bad api_call.
                 logger.debug(e)
